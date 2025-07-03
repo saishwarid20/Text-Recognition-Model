@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Text Recognition</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            margin: 100px;
+            text-align: center;
+            background-color: #d0eaff;
+        }
+        .container {
+            display: inline-block;
+            margin-top: 20px;
+            text-align: left;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 40px;
+            font-weight: bold;
+            color: #060606;
+            margin-bottom: 20px;
+        }
+        .button-group {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 12px 25px;
+            margin: 5px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #00093c;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #image-display {
+            margin-top: 80px;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        #recognized-text {
+            margin-top: 20px;
+            font-size: 20px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Text Recognition</h1>
+    <div class="container">
+        <div class="button-group">
+            <input type="file" id="image-upload" accept="image/*" style="display: none;">
+            <button onclick="uploadImage()">Upload Image</button>
+            <button onclick="recognizeText()">Recognize Text</button>
+            <button onclick="clearImage()">Clear</button>
+        </div>
+        <div id="image-display"></div>
+        <div id="recognized-text"></div>
+    </div>
+
+    <script>
+        let uploadedImage = null;
+
+        function uploadImage() {
+            const imageInput = document.getElementById('image-upload');
+            imageInput.click();
+
+            imageInput.onchange = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const imgElement = document.createElement('img');
+                        imgElement.src = reader.result;
+                        imgElement.alt = 'Uploaded Image';
+                        imgElement.id = 'uploaded-image';
+
+                        const imageDisplay = document.getElementById('image-display');
+                        imageDisplay.innerHTML = '';
+                        imageDisplay.appendChild(imgElement);
+
+                        uploadedImage = reader.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+        }
+
+        function recognizeText() {
+            if (!uploadedImage) {
+                alert('Please upload an image first.');
+                return;
+            }
+
+            const formData = new FormData();
+            const imageInput = document.getElementById('image-upload');
+            formData.append("image", imageInput.files[0]);
+
+            fetch('http://127.0.0.1:5000/recognize_text', { // Update this URL if hosting elsewhere
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const recognizedText = data.text;
+                const accuracy = data.accuracy;
+                document.getElementById('recognized-text').textContent = `Recognized Text: ${recognizedText}\nAccuracy: ${accuracy}%`;
+            })
+            .catch(error => {
+                console.error("Error recognizing text:", error);
+                alert("An error occurred while processing the image.");
+            });
+        }
+
+        function clearImage() {
+            document.getElementById('image-display').innerHTML = '';
+            document.getElementById('recognized-text').textContent = '';
+            uploadedImage = null;
+        }
+    </script>
+</body>
+</html>
